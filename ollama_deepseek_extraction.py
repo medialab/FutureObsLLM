@@ -7,31 +7,39 @@ https://github.com/instructor-ai/instructor/blob/main/docs/concepts/retrying.md
 
 from openai import OpenAI
 from pydantic import BaseModel, Field
-from typing import List, Literal
+from typing import List
 
 import instructor
 from instructor.exceptions import InstructorRetryException
 
-class ExampleMetadataExtraction(BaseModel):
+
+class Section(BaseModel):
+    tag: str = Field(
+        description="Human activity mentioned in this section of the text, \
+        such as politics, sports, fishing, agriculture, tourism..."
+    )
+    keyword: str = Field(
+        description="Word from the text justifying the tag. Example: the keyword 'football' justifies the tag 'sports'"
+    )
+    excerpt: str = Field(
+        description="Small excerpt from the text giving more context to the extracted word. Example for the word football: 'la coupe du monde de football'"
+    )
+
+
+class MetadataExtraction(BaseModel):
     """Extracted metadata about an example from the Modal examples repo."""
 
-    summary: str = Field(..., description="A brief summary of the text (less than 30 words).")
-    location: str = Field(..., description="The place where human activities take place, if any.")
-    tags: list[
-        Literal[
-            "fishing",
-            "tourism",
-            "politics",
-            "sports",
-            "work",
-            "hunting",
-            "agriculture",
-            "none"
-        ]
-    ] = Field(..., description="The type of human activities found in the text")
+    summary: str = Field(
+        ..., description="A brief summary of the text (less than 30 words)."
+    )
+    location: str = Field(
+        ..., description="The place where human activities take place, if any."
+    )
+    sections: List[Section] = Field(
+        description="A list of small excerpts of the document mentioning human activities."
+    )
 
 
-# enables `response_model` in create call
 client = instructor.from_openai(
     OpenAI(
         base_url="http://localhost:5005/v1",
@@ -59,8 +67,9 @@ for query in queries:
                     "content": f"Extract the metadata for this text. \n\n-----TEXT BEGINS-----{query}-----TEXT ENDS-----\n\n",
                 }
             ],
-            response_model=ExampleMetadataExtraction,
+            response_model=MetadataExtraction,
         )
         print(resp.model_dump_json(indent=2))
+
     except InstructorRetryException:
         print("InstructorRetryException")

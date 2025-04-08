@@ -16,6 +16,7 @@ args = ap.parse_args()
 question = f"Who is {args.name}?"
 print(question)
 
+
 class Character(BaseModel):
     name: str
     age: int
@@ -37,7 +38,7 @@ resp = client.chat.completions.create(
     messages=[
         {
             "role": "user",
-            f"content": question,
+            "content": question,
         }
     ],
     response_model=Character,
