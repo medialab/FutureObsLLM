@@ -8,9 +8,12 @@ https://github.com/instructor-ai/instructor/blob/main/docs/concepts/retrying.md
 from openai import OpenAI
 from pydantic import BaseModel, Field
 from typing import List
+import time
 
 import instructor
 from instructor.exceptions import InstructorRetryException
+
+prompt = "./prompt.txt"
 
 
 class Section(BaseModel):
@@ -40,6 +43,8 @@ class MetadataExtraction(BaseModel):
     )
 
 
+start_time = time.time()
+
 client = instructor.from_openai(
     OpenAI(
         base_url="http://localhost:5005/v1",
@@ -64,7 +69,7 @@ for query in queries:
             messages=[
                 {
                     "role": "user",
-                    "content": f"Extract the metadata for this text. \n\n-----TEXT BEGINS-----{query}-----TEXT ENDS-----\n\n",
+                    "content": prompt,
                 }
             ],
             response_model=MetadataExtraction,
@@ -73,3 +78,9 @@ for query in queries:
 
     except InstructorRetryException:
         print("InstructorRetryException")
+
+end_time = time.time()
+elapsed_time = end_time - start_time
+
+
+print(f"\nTemps de réponse : {elapsed_time:.2f} secondes")
