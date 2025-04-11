@@ -49,12 +49,12 @@ def pre_processing(file_path):
     with open(file_path, mode='r', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            titre = row.get('title', '') or ''
+            title = row.get('title', '') or ''
             description = row.get('description', '') or ''
             message = row.get('message', '') or ''
-            merged_text = f"{titre} {description} {message}" # merge rows titre, description et message
-            cleaned_text = pattern.sub('', merged_text) # appliquer le pattern regex
-            print(f"Texte nettoyé pour la ligne : {cleaned_text}") # verifier que ça nettoie le texte de chaque ligne
+            merged_text = f"{title} {description} {message}" # merge rows "titre", "description" and "message"
+            cleaned_text = pattern.sub('', merged_text) # apply regex pattern
+            print(f"Text cleaned for line : {cleaned_text}") # check that each line has been cleaned
             yield cleaned_text
 
 
