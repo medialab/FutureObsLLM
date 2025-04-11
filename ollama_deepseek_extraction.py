@@ -91,6 +91,11 @@ class MetadataExtraction(BaseModel):
     sections: List[Section] = Field(
         description="A list of small excerpts of the document mentioning human activities."
     )
+    impact: str = Field(
+        ..., desctiption="One keyword summarizing the positive or negative impact mentioned in the text. \
+        Examples of positive impacts: Biodiversity, Protection, Sustainable development, Recycling. \
+        Examples of negative impacts: Pollution, Waste, Destruction, Danger."
+    )
 
 # execution 
 
