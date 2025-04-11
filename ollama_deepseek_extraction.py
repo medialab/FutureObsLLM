@@ -27,10 +27,14 @@ pattern = re.compile(
     r'['
         u"\U0001F600-\U0001F64F"  # emojis
         u"\U0001F300-\U0001F5FF"  # symbols & pictograms
+        u"\U0001F900-\U0001F9FF" # other symbols and pictograms
         u"\U0001F680-\U0001F6FF"  # transport & cards
         u"\U0001F1E0-\U0001F1FF"  # flags
         u"\U00002700-\U000027BF"  # diverse symbols
+        u"\U0001FA70-\U0001FAFF" # other symbols
+        u"\U00002600-\U000026FF" # miscellaneous symbols
         u"\U000024C2-\U0001F251"  # other characters
+        u"\U0001F780-\U0001F7FF" # geometric shapes
         r']+', 
         flags=re.UNICODE
 )
@@ -107,14 +111,13 @@ for file_path in files:
     start_time = time.time()
     output_file = file_path.replace('.csv', '_results')
 
-    for row in pre_processing(file_path):
-        real_prompt = prompt_template.format(input_text=row)
+    for idx, row in enumerate(pre_processing(file_path), start=1): # enumerate rows so that the idx can be printed in the exception
 
         try:
             response = client.chat.completions.create(
                 model="deepseek-r1:70b",
                 messages=[
-                    {"role": "system", "content": real_prompt},
+                    {"role": "system", "content": prompt_template},
                     {"role": "user", "content": row}
                 ],
                 response_model=MetadataExtraction,
@@ -123,7 +126,8 @@ for file_path in files:
             if response_json:
                 write_result(output_file, response_json)
         except InstructorRetryException as e:
-            print(f"Error on row : {row}")
+            print(f"Error on row {idx}: {row}") # print index and text of the row
+            print(f"Exception message: {e}") # print exception message
             continue
         
         end_time = time.time()
