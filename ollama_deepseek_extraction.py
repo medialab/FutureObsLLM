@@ -49,54 +49,18 @@ def pre_processing(file_path):
     with open(file_path, mode='r', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            title = row.get('title', '') or ''
-            description = row.get('description', '') or ''
-            message = row.get('message', '') or ''
+            title = row.get('title', '')
+            description = row.get('description', '')
+            message = row.get('message', '')
             merged_text = f"{title} {description} {message}" # merge rows "titre", "description" and "message"
             cleaned_text = pattern.sub('', merged_text) # apply regex pattern
-            print(f"Text cleaned for line : {cleaned_text}") # check that each line has been cleaned
+            print(f"Text cleaned for row : {cleaned_text}") # check that each row has been cleaned
             yield cleaned_text
-
-
-def process_csv_line(line, prompt_template): # read csv files row by row
-
-    real_prompt = prompt_template.format(input_text=line) 
-
-    try:
-        response = client.chat.completions.create(
-            model="deepseek-r1:70b", 
-            messages=[
-                {"role": "system", 
-                "content": "You are a world renowned algorithm capable of extracting accurate tags from text"},
-                {"role": "user", "content":real_prompt
-                }
-            ],
-            response_model=MetadataExtraction,
-        )
-        return response.model_dump_json(indent=2)  # json response
-    except InstructorRetryException as e:
-        print(f"Erreur dans la requête pour la ligne : {line}.")
-        return None 
 
 def write_result(output_file, data):
     print(f"{data}")
     with open(output_file, 'a', encoding='utf-8') as f:
         f.write(data + '\n')
-        
-
-def process_csv_file(file_path, prompt_template):
-    start_time = time.time()
-    output_file = file_path.replace('.csv', '_results') 
-
-    for text_to_process in pre_processing(file_path):
-        response_json = process_csv_line(text_to_process, prompt_template)
-        if response_json:
-            write_result(output_file, response_json)
-    
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"\nTemps total pour le fichier {file_path} : {elapsed_time:.2f} secondes")
-
 
 # classes
 
@@ -138,5 +102,30 @@ client = instructor.from_openai(
 
 files = read_files(folder)
 
+# main loop to analyse each row of the csv file based on the prompt and get a json response
 for file_path in files:
-    process_csv_file(file_path, prompt_template)
+    start_time = time.time()
+    output_file = file_path.replace('.csv', '_results')
+
+    for row in pre_processing(file_path):
+        real_prompt = prompt_template.format(input_text=row)
+
+        try:
+            response = client.chat.completions.create(
+                model="deepseek-r1:70b",
+                messages=[
+                    {"role": "system", "content": real_prompt},
+                    {"role": "user", "content": row}
+                ],
+                response_model=MetadataExtraction,
+            )
+            response_json = response.model_dump_json(indent=2)               
+            if response_json:
+                write_result(output_file, response_json)
+        except InstructorRetryException as e:
+            print(f"Error on row : {row}")
+            continue
+        
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"\nTotal time for file {file_path} : {elapsed_time:.2f} seconds") # total seconds taken to load the response
