@@ -80,6 +80,14 @@ class Section(BaseModel):
         description="Small excerpt from the text giving more context to the extracted word. Example for the word football: 'la coupe du monde de football'"
     )
 
+class Impact(BaseModel):
+    impact: str = Field(
+        description ="One keyword summarizing the positive or negative impact mentioned in the text."
+    )
+    excerpt: str = Field(
+        description="Small excerpt from the text giving contect to the tag extracted for the impact. Example for the word pollution : 'la plage est polluée'"
+    )
+
 class MetadataExtraction(BaseModel):
     """Extracted metadata about an example from the Modal examples repo."""
     summary: str = Field(
@@ -91,10 +99,8 @@ class MetadataExtraction(BaseModel):
     sections: List[Section] = Field(
         description="A list of small excerpts of the document mentioning human activities."
     )
-    impact: str = Field(
-        ..., desctiption="One keyword summarizing the positive or negative impact mentioned in the text. \
-        Examples of positive impacts: Biodiversity, Protection, Sustainable development, Recycling. \
-        Examples of negative impacts: Pollution, Waste, Destruction, Danger."
+    impact: List[Impact] = Field(
+        description="A list containing a tag and an excerpt from the document mentioning the positive and/or negative impact of human activities"
     )
 
 # execution 
