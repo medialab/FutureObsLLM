@@ -66,6 +66,22 @@ def write_result(output_file, data):
     with open(output_file, 'a', encoding='utf-8') as f:
         f.write(data + '\n')
 
+def write_csv(output_csv_path, data_rows): # csv output
+    fieldnames = ['id','row', 'file', 'summary', 'location', 'category', 'keyword', 'context', 'impact', 'impact_excerpt']
+    file_exists = False
+    try:
+        with open(output_csv_path, 'r', encoding='utf-8') as f:
+            file_exists = True
+    except FileNotFoundError:
+        pass
+
+    with open(output_csv_path, 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        for row in data_rows:
+            writer.writerow(row)
+
 # classes
 
 class Section(BaseModel):
@@ -116,14 +132,16 @@ client = instructor.from_openai(
 )
 
 files = read_files(folder)
+unique_id = 1  # unique id in csv output
 
 # main loop to analyse each row of the csv file based on the prompt and get a json response
 for file_path in files:
     start_time = time.time()
     output_file = file_path.replace('.csv', '_results')
+    output_csv_path = output_file + ".csv"
 
     for idx, row in enumerate(pre_processing(file_path), start=1): # enumerate rows so that the idx can be printed in the exception
-
+        csv_rows = [] 
         try:
             response = client.chat.completions.create(
                 model="deepseek-r1:70b",
@@ -136,11 +154,27 @@ for file_path in files:
             response_json = response.model_dump_json(indent=2)               
             if response_json:
                 write_result(output_file, response_json)
+                for section in response.sections:
+                    for impact in response.impact:
+                        csv_rows.append({ # csv rows
+                            'id':unique_id,
+                            'row':f"{idx}",
+                            'file':f"{file_path}",
+                            'summary' : response.summary if response.summary else 'not found',
+                            'location': response.location if response.location else 'not found',
+                            'category': section.tag if section.tag else 'not found',
+                            'keyword': section.keyword if section.keyword else 'not found',
+                            'context': section.excerpt if section.excerpt else 'not found',
+                            'impact': impact.impact if impact.impact else 'not found',
+                            'impact_excerpt' : impact.excerpt if impact.impact else 'not found',
+                            })
+                        unique_id += 1
         except InstructorRetryException as e:
             print(f"Error on row {idx}: {row}") # print index and text of the row
             print(f"Exception message: {e}") # print exception message
-            continue
         
+        write_csv(output_csv_path, csv_rows)
+
         end_time = time.time()
         elapsed_time = end_time - start_time
-        print(f"\nTotal time for file {file_path} : {elapsed_time:.2f} seconds") # total seconds taken to load the response
+        print(f"\nTotal time for file {file_path} : {elapsed_time:.2f} seconds") # total seconds taken to load the response for each file
