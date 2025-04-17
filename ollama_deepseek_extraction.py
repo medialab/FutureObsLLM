@@ -55,12 +55,13 @@ def pre_processing(file_path):
         reader = csv.DictReader(csvfile)
         for row in reader:
             title = row.get('title', '')
+            id_row = row.get('id', '') # get id from original csv files
             description = row.get('description', '')
             message = row.get('message', '')
             merged_text = f"{title} {description} {message}" # merge rows "titre", "description" and "message"
             cleaned_text = pattern.sub('', merged_text) # apply regex pattern
             print(f"Text cleaned for row : {cleaned_text}") # check that each row has been cleaned
-            yield cleaned_text
+            yield cleaned_text, id_row
 
 def write_result(output_file, data):
     print(f"{data}")
@@ -128,7 +129,7 @@ client = instructor.from_openai(
 )
 
 files = read_files(folder)
-unique_id = 1  # unique id in csv output
+
 
 # main loop to analyse each row of the csv file based on the prompt and get a json response
 for file_path in files:
@@ -153,24 +154,37 @@ for file_path in files:
                 for section in response.sections:
                     for impact in response.impact:
                         csv_rows.append({ # csv rows
-                            'id':unique_id,
+                            'id':id_row,
                             'row':idx,
                             'file':file_path.split("/")[-1],
-                            'summary' : response.summary if response.summary else 'not found',
-                            'location': response.location if response.location else 'not found',
-                            'category': section.tag if section.tag else 'not found',
-                            'keyword': section.keyword if section.keyword else 'not found',
-                            'context': section.excerpt if section.excerpt else 'not found',
-                            'impact': impact.impact if impact.impact else 'not found',
-                            'impact_excerpt' : impact.excerpt if impact.impact else 'not found',
+                            'summary' : response.summary,
+                            'location': response.location,
+                            'category': section.tag,
+                            'keyword': section.keyword,
+                            'context': section.excerpt,
+                            'impact': impact.impact,
+                            'impact_excerpt' : impact.excerpt,
                             })
-                        unique_id += 1
 
                 write_csv(output_csv_path, csv_rows) # write in the csv only if there was no exception
 
         except InstructorRetryException as e:
             print(f"Error on row {idx}: {row}") # print index and text of the row
             print(f"Exception message: {e}") # print exception message
+
+            # if extraction exception, keep only id, row and file name
+            csv_rows.append({
+                'id': id_row,
+                'row': idx,
+                'file': file_path.split("/")[-1],
+                'summary': '',
+                'location': '',
+                'category': '',
+                'keyword': '',
+                'context': '',
+                'impact': '',
+                'impact_excerpt': '',
+            })
 
         end_time = time.time()
         elapsed_time = end_time - start_time
