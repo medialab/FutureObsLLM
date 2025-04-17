@@ -11,6 +11,7 @@ from typing import List
 import glob
 import re
 import time
+import os
 import csv
 import instructor
 from instructor.exceptions import InstructorRetryException
@@ -66,14 +67,9 @@ def write_result(output_file, data):
     with open(output_file, 'a', encoding='utf-8') as f:
         f.write(data + '\n')
 
-def write_csv(output_csv_path, data_rows): # csv output
-    fieldnames = ['id','row', 'file', 'summary', 'location', 'category', 'keyword', 'context', 'impact', 'impact_excerpt']
-    file_exists = False
-    try:
-        with open(output_csv_path, 'r', encoding='utf-8') as f:
-            file_exists = True
-    except FileNotFoundError:
-        pass
+def write_csv(output_csv_path, data_rows):  # csv output
+    fieldnames = ['id', 'row', 'file', 'summary', 'location', 'category', 'keyword', 'context', 'impact', 'impact_excerpt']
+    file_exists = os.path.exists(output_csv_path)
 
     with open(output_csv_path, 'a', newline='', encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -158,8 +154,8 @@ for file_path in files:
                     for impact in response.impact:
                         csv_rows.append({ # csv rows
                             'id':unique_id,
-                            'row':f"{idx}",
-                            'file':f"{file_path}",
+                            'row':idx,
+                            'file':file_path.split("/")[-1],
                             'summary' : response.summary if response.summary else 'not found',
                             'location': response.location if response.location else 'not found',
                             'category': section.tag if section.tag else 'not found',
@@ -169,11 +165,12 @@ for file_path in files:
                             'impact_excerpt' : impact.excerpt if impact.impact else 'not found',
                             })
                         unique_id += 1
+
+                write_csv(output_csv_path, csv_rows) # write in the csv only if there was no exception
+
         except InstructorRetryException as e:
             print(f"Error on row {idx}: {row}") # print index and text of the row
             print(f"Exception message: {e}") # print exception message
-        
-        write_csv(output_csv_path, csv_rows)
 
         end_time = time.time()
         elapsed_time = end_time - start_time
