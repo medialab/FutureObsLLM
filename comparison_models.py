@@ -75,7 +75,7 @@ for i in x:
     plt.text(i, summary_df['common entities'][i] + summary_df['unique entities'][i] / 2, str(summary_df['unique entities'][i]), ha='center', va='center', color='white', fontsize=10)
 
 plt.tight_layout()
-plt.savefig("entity_plot.png", dpi=300)
+plt.savefig("data/entity_plot.png", dpi=300)
 plt.show()
 
 print(summary_df[['model', 'total entities', 'common entities', 'unique entities', 'specificity (%)']])
