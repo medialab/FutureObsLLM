@@ -138,6 +138,8 @@ for file_path in files:
     output_csv_path = output_file + ".csv"
 
     for idx, row in enumerate(pre_processing(file_path), start=1): # enumerate rows so that the idx can be printed in the exception
+        id_row = row[1]
+        cleaned_text = row[0]
         csv_rows = [] 
         try:
             response = client.chat.completions.create(

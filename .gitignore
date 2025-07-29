@@ -3,6 +3,11 @@ prompt.txt
 shorter_prompt.txt
 prompt_in_english.txt
 data/
+maxime/
+test_miniprompt.txt
+prompt_entier.txt
+sample_pour_rag_results.csv
+sample_pour_rag_results_2.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
