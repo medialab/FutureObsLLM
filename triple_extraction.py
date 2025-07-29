@@ -6,7 +6,7 @@ import spacy
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 
 # config
-MAX_LINES = None  
+MAX_LINES = None
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
 

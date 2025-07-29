@@ -1,6 +1,14 @@
 # FutureObsLLM
 Scripts used to detect entities in FutureObs data.
 
+## Python version
+python 3.12
+
+## Installation
+
+run `docker run -d --runtime nvidia --gpus all -v ollama:/root/.ollama -p 5005:11434 --name ollamaDeepseekLlama70B ollama/ollama` to start ollama server before running deepseek scripts.
+run `python -m spacy download fr_core_news_lg` before running script triple_extraction.py.
+
 ## Repository structure
    script | description |
  |--------|-------------|
